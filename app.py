@@ -54,7 +54,7 @@ def generate_plot(archive, start, end, parameters):
     autosize=True,
     plot_bgcolor="#fff",
     hovermode="x"
-    )
+  )
 
   # Set X axis layout
   fig.update_layout(xaxis=dict(
@@ -156,18 +156,64 @@ def generate_plot(archive, start, end, parameters):
   return fig
 
 app = dash.Dash(__name__)
-app.layout = html.Div(children=[
-  dcc.Graph(
-    id='graph',
-      responsive=True,
-      style={"height":"100%"}
-  ),
 
-  dcc.Interval(
-    id='interval-component',
-    interval=20*1000
-  )
-], style={"height":"100vh"})
+app.layout = html.Div(
+  [
+    html.Div(
+      [
+        html.Div(
+          [
+            html.Label("Plot:"),
+            dcc.Checklist(
+              id="parameters-checklist",
+              options=[
+                  {"label": label, "value": value} for value, label in PARAMETER_NAMES.items()
+              ],
+              value=list(PARAMETER_NAMES.keys()),
+              className="form-inputlist",
+              labelClassName="form-inputlist-label",
+              inputClassName="form-inputlist-input"
+            )
+          ],
+          className="menu-form menu-form-left"
+        ),
+        html.Div(
+          [
+            html.Label("Period:"),
+            dcc.RadioItems(
+              id="period-radioitems",
+              options=[
+                {"label": "Last 24 hours", "value": "last24"},
+                {"label": "Custom:", "value": "custom"}
+              ],
+              value="last24",
+              className="form-inputlist",
+              labelClassName="form-inputlist-label",
+              inputClassName="form-inputlist-input"
+            ),
+            dcc.DatePickerRange(
+              id="custom-period-picker",
+              display_format="DD.MM.YYYY"
+              #disabled=True
+            )
+          ],
+          className="menu-form"
+        )
+      ],
+      className="menu"
+    ),
+    dcc.Graph(
+      id='graph',
+      responsive=True,
+      className="graph"
+    ),
+    dcc.Interval(
+      id='interval-component',
+      interval=20*1000
+    )
+  ],
+  className="container"
+)
 
 @app.callback(Output('graph', 'figure'),
         Input('interval-component', 'n_intervals'))
