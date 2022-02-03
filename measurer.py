@@ -62,12 +62,10 @@ class MeasurementsArchive:
       return self.start is not None and self.end is not None
 
     def overlapping(self, start, end):
-      return self.start <= end and self.end >= start
+      return self.has_timeframe() and self.start <= end and self.end >= start
 
     def overlapping_other(self, other):
-      if not self.has_timeframe() or not other.has_timeframe():
-        return False
-      return self.overlapping(other.start, other.end)
+      return other.has_timeframe() and self.overlapping(other.start, other.end)
 
     def is_open(self):
       return self.dataframe is not None
@@ -97,6 +95,8 @@ class MeasurementsArchive:
       self.dataframe=pd.concat([self.dataframe, frame], copy=False, verify_integrity=True)
       self.samples+=1
       self.end=time
+      if self.start is None:
+        self.start = self.end
 
   def __init__(self, archive_path):
     self.archive_path=archive_path
@@ -104,9 +104,6 @@ class MeasurementsArchive:
   
   def last_entry(self):
     return self.archive_entries[-1]
-
-  def is_open(self):
-    return len(self.archive_entries) != 0
 
   def open(self):
     if self.is_open():
@@ -123,25 +120,32 @@ class MeasurementsArchive:
                           [os.path.join(self.archive_path, f) for f in os.listdir(self.archive_path)]
                           if os.path.isfile(f)]
 
-    for file in files_in_archive_path:
-      try:
-        self.archive_entries.append(MeasurementsArchive.ArchiveEntry.from_file(file))
-      except:
-        print(f"{file} not a valid pandas DataFrame")
-
-    self.archive_entries.sort(key=lambda e:e.start if not e.start is None else datetime.max)
-
-    for a, b in itertools.combinations(self.archive_entries, 2):
-      if a.overlapping_other(b):
-        print(f"{a.path} and {b.path} are overlapping!")
-
-    archive_entries_ending_in_future=(e for e in self.archive_entries if not e.end is None and e.end > datetime.now())
-    for e in archive_entries_ending_in_future:
-      self.archive_entries.remove(e)
-      print(f"{e.path} is ending in the future.")
+    self.append_entries_from_files(files_in_archive_path)
 
     if not self.archive_entries:
       self.append_entry()
+
+  def refresh_last_entry(self):
+    self.last_entry().close()
+    last_entry_path=self.last_entry().path
+    self.archive_entries.pop()
+    self.archive_entries.append(MeasurementsArchive.ArchiveEntry.from_file(last_entry_path))
+
+  def refresh(self):
+    if not self.is_open():
+      raise RuntimeError("Cannot refresh an unopend MeasurementsArchive")
+
+    self.refresh_last_entry()
+
+    already_opened_files=[e.path for e in self.archive_entries]
+    new_files=[f for f in 
+              [os.path.join(self.archive_path, f) for f in os.listdir(self.archive_path)] 
+              if os.path.isfile(f) and f not in already_opened_files]
+    if new_files:
+      self.append_entries_from_files(new_files)
+
+  def is_open(self):
+    return len(self.archive_entries) != 0
   
   def close(self):
     open_entries = (e for e in self.archive_entries if e.is_open())
@@ -151,12 +155,29 @@ class MeasurementsArchive:
     
   def append_entry(self):
     try:
-      if self.last_entry().is_open():
         self.last_entry().close()
     except:
       pass
     finally:
       self.archive_entries.append(MeasurementsArchive.ArchiveEntry.empty(self.archive_path))
+
+  def append_entries_from_files(self, filepaths):
+    for file in filepaths:
+      try:
+        self.archive_entries.append(MeasurementsArchive.ArchiveEntry.from_file(file))
+      except:
+        print(f"{file} not a valid pandas DataFrame")
+
+    self.archive_entries.sort(key=lambda e:e.start if not e.start is None else datetime.max)
+
+    for a, b in itertools.combinations(self.archive_entries, 2):
+      if a.overlapping_other(b):
+        print(f"{a.path} and {b.path} are overlapping!") # perhaps a RuntimeError
+
+    archive_entries_ending_in_future=(e for e in self.archive_entries if not e.end is None and e.end > datetime.now())
+    for e in archive_entries_ending_in_future:
+      self.archive_entries.remove(e)
+      print(f"{e.path} is ending in the future.") # perhaps a RuntimeError
 
   def entries_in_span(self, start, end):
     entries=[]
