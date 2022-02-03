@@ -104,6 +104,12 @@ class MeasurementsArchive:
   def last_entry(self):
     return self.archive_entries[-1]
 
+  def archive_start(self):
+    return self.archive_entries[0].start
+
+  def archive_end(self):
+    return self.last_entry().end
+
   def open(self):
     if self.is_open():
       self.close()
