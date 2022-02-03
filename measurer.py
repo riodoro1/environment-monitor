@@ -1,4 +1,3 @@
-
 import time
 import math
 
@@ -146,7 +145,7 @@ class MeasurementsArchive:
 
   def is_open(self):
     return len(self.archive_entries) != 0
-  
+
   def close(self):
     open_entries = (e for e in self.archive_entries if e.is_open())
     for entry in open_entries:
@@ -155,7 +154,7 @@ class MeasurementsArchive:
     
   def append_entry(self):
     try:
-        self.last_entry().close()
+      self.last_entry().close()
     except:
       pass
     finally:
@@ -249,11 +248,11 @@ def obtain_bme(smbus=1):
 
 if __name__ == "__main__":
   period=30
-  save_every=10
+  save_every=2
   samples_in_hour=3600/period
   samples_in_day=24*samples_in_hour
-  max_samples=1*samples_in_day
-  a=MeasurementsArchive("/home/rafal/climate-monitor/measurements")
+  max_samples=7*samples_in_day
+  a=MeasurementsArchive("/home/rafal/environment-monitor/measurements")
   a.open()
   m=Measurer(obtain_bme(), a, period, max_samples_per_file=max_samples, save_every_samples=save_every)
   print("Running a test instance of measurer")

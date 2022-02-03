@@ -62,6 +62,9 @@ body {
 .DateInput_input__focused {
   border-color: highlight;
 }
+.DateInput_input__disabled {
+  font-style: initial;
+}
 .DateRangePickerInput_arrow_svg {
   margin-left: 4px;
 }
