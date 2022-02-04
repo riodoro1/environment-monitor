@@ -6,25 +6,25 @@ import time
 
 class Plotter:
   PARAMETERS={
-  "temperature":{
-    "name":"Temperature",
-    "color":"#EF553B",
-    "format":"0.1f",
-    "suffix":"°C"
-  },
-  "humidity":{
-    "name":"Humidity",
-    "color":"#636EFA",
-    "format":"0.0f",
-    "suffix":"%"
-  },
-  "pressure":{
-    "name":"Pressure",
-    "color":"#00CC96",
-    "format":"0.0f",
-    "suffix":"hPa"
-  },
-}
+    "temperature":{
+      "name":"Temperature",
+      "color":"#EF553B",
+      "format":"0.1f",
+      "suffix":"°C"
+    },
+    "humidity":{
+      "name":"Humidity",
+      "color":"#636EFA",
+      "format":"0.0f",
+      "suffix":"%"
+    },
+    "pressure":{
+      "name":"Pressure",
+      "color":"#00CC96",
+      "format":"0.0f",
+      "suffix":"hPa"
+    },
+  }
 
   def __init__(self, archive):
     self.archive = archive

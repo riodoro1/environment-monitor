@@ -1,14 +1,12 @@
-import time
-import math
+#!/home/rafal/environment-monitor/venv/bin/python -u
 
-import threading
-import bme280
 from smbus import SMBus
 from bme280 import BME280
+
 import pandas as pd
 import numpy as np
-from datetime import datetime
-import os, tempfile, itertools, random, string
+
+import time, datetime, threading, signal, os, tempfile, itertools, random, string
 
 class MeasurementsArchive:
   class ArchiveEntry:
@@ -173,13 +171,13 @@ class MeasurementsArchive:
       except:
         print(f"{file} not a valid pandas DataFrame")
 
-    self.archive_entries.sort(key=lambda e:e.start if not e.start is None else datetime.max)
+    self.archive_entries.sort(key=lambda e:e.start if not e.start is None else datetime.datetime.max)
 
     for a, b in itertools.combinations(self.archive_entries, 2):
       if a.overlapping_other(b):
         print(f"{a.path} and {b.path} are overlapping!") # perhaps a RuntimeError
 
-    archive_entries_ending_in_future=(e for e in self.archive_entries if not e.end is None and e.end > datetime.now())
+    archive_entries_ending_in_future=(e for e in self.archive_entries if not e.end is None and e.end > datetime.datetime.now())
     for e in archive_entries_ending_in_future:
       self.archive_entries.remove(e)
       print(f"{e.path} is ending in the future.") # perhaps a RuntimeError
@@ -212,7 +210,7 @@ class Measurer(threading.Thread):
         self.bme280.humidity,
         self.bme280.pressure
       ], 
-      datetime.now()
+      datetime.datetime.now()
     )
 
   def append_to_archive(self, measurement, time):
@@ -239,9 +237,10 @@ class Measurer(threading.Thread):
     self.archive.close()
 
   def run(self):
-    while not self.stop_event.is_set():
+    while True:
       self.make_measurement()
-      time.sleep(self.period)
+      if self.stop_event.wait(timeout = self.period):
+        break
 
 def obtain_bme(smbus=1):
   bus = SMBus(smbus)
@@ -253,13 +252,21 @@ def obtain_bme(smbus=1):
   return bme
 
 if __name__ == "__main__":
-  period=30
-  save_every=2
-  samples_in_hour=3600/period
-  samples_in_day=24*samples_in_hour
-  max_samples=7*samples_in_day
-  a=MeasurementsArchive("/home/rafal/environment-monitor/measurements")
-  a.open()
-  m=Measurer(obtain_bme(), a, period, max_samples_per_file=max_samples, save_every_samples=save_every)
-  print("Running a test instance of measurer")
-  m.start()
+  PERIOD=30
+  SAVE_EVERY=2
+  SAMPLES_IN_HOUR=3600/PERIOD
+  SAMPLES_IN_DAY=24*SAMPLES_IN_HOUR
+  MAX_SAMPLES=7*SAMPLES_IN_DAY
+  PATH="/home/rafal/environment-monitor/measurements"
+  archive=MeasurementsArchive(PATH)
+  archive.open()
+  measurer=Measurer(obtain_bme(), archive, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
+
+  def catch_signal(*args):
+    measurer.stop()
+
+  signal.signal(signal.SIGTERM, catch_signal)
+  signal.signal(signal.SIGINT, catch_signal)
+  print("Running...")
+  measurer.run() # Can be blocking here, we are in a deamon thread after all
+  print("Measurer stopped.")
