@@ -92,9 +92,11 @@ def change_refresh_method(period_selection):
   Input("refresher", "n_intervals")
 )
 def update_custom_period_picker(_):
+  min_date=ARCHIVE.archive_start()
+  max_date=datetime.datetime(ARCHIVE.archive_end().year, ARCHIVE.archive_end().month, ARCHIVE.archive_end().day)
   return [
-    ARCHIVE.archive_start(),
-    ARCHIVE.archive_end(),
+    min_date,
+    max_date,
     datetime.datetime.now() - datetime.timedelta(hours=24),
     datetime.datetime.now()
   ]
@@ -117,6 +119,10 @@ def update_plot(_, period_selection, parameter_selection, custom_start, custom_e
     print(f"Custom start:{custom_start}, end:{custom_end}")
     end=datetime.datetime.fromisoformat(custom_end)
     start=datetime.datetime.fromisoformat(custom_start)
+    if end.hour == end.minute == end.second == 0:
+      end = end + datetime.timedelta(hours=23, minutes=59, seconds=59)
+      print(f"Adjusting custom_end to: {end.isoformat()}")
+    
   
   return PLOTTER.get_plot(start, end, parameter_selection)
 
