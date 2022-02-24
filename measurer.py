@@ -6,7 +6,7 @@ from bme280 import BME280
 import pandas as pd
 import numpy as np
 
-import time, datetime, threading, signal, os, tempfile, itertools, random, string
+import time, datetime, threading, signal, os, tempfile, itertools, random, string, sys
 
 class MeasurementsArchive:
   class ArchiveEntry:
@@ -257,7 +257,9 @@ if __name__ == "__main__":
   SAMPLES_IN_HOUR=3600/PERIOD
   SAMPLES_IN_DAY=24*SAMPLES_IN_HOUR
   MAX_SAMPLES=7*SAMPLES_IN_DAY
-  PATH="/home/rafal/environment-monitor/measurements"
+  PATH="./test-data"
+  if len(sys.argv) == 2:
+    PATH=sys.argv[1]
   archive=MeasurementsArchive(PATH)
   archive.open()
   measurer=Measurer(obtain_bme(), archive, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
@@ -267,6 +269,6 @@ if __name__ == "__main__":
 
   signal.signal(signal.SIGTERM, catch_signal)
   signal.signal(signal.SIGINT, catch_signal)
-  print("Running...")
+  print(f"Running in {archive.archive_path}...")
   measurer.run() # Can be blocking here, we are in a deamon thread after all
   print("Measurer stopped.")

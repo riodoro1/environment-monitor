@@ -49,6 +49,20 @@ class Plotter:
 
     fig = go.Figure()
     if len(parameters)==0 or dataframe.empty:
+      fig.add_shape(
+        type="rect",
+        xref="paper", yref="paper",
+        x0=-0.5, y0=-0.5,
+        x1=1.5, y1=1.5,
+        fillcolor="White",
+      )
+      fig.add_annotation(
+        text="No data in selected range.",
+        font=dict(size=24),
+        align="center",
+        xref="paper", yref="paper",
+        x=0.5, y=0.5, showarrow=False
+      )
       return fig
 
     # Set general plot layout

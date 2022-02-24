@@ -5,7 +5,7 @@ from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
 
-import datetime
+import datetime, sys
 
 from measurer import MeasurementsArchive
 from plotter import Plotter
@@ -69,7 +69,7 @@ def app_layout():
     className="container"
   )
 
-ARCHIVE = MeasurementsArchive("/home/rafal/environment-monitor/measurements")
+ARCHIVE = MeasurementsArchive("./test-data")
 ARCHIVE.open()
 PLOTTER = Plotter(ARCHIVE)
 
@@ -127,4 +127,10 @@ def update_plot(_, period_selection, parameter_selection, custom_start, custom_e
   return PLOTTER.get_plot(start, end, parameter_selection)
 
 if __name__ == '__main__':
+  if len(sys.argv) == 2:
+    ARCHIVE = MeasurementsArchive(sys.argv[1])
+    ARCHIVE.open()
+    PLOTTER = Plotter(ARCHIVE)
+
+  print(f"Launching server for archive in: {ARCHIVE.archive_path},\n{ARCHIVE.archive_entries}")
   app.run_server(host='0.0.0.0', debug=False)
