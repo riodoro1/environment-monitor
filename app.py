@@ -1,4 +1,4 @@
-#!/home/rafal/environment-monitor/venv/bin/python
+#!./venv/bin/python
 
 import dash
 from dash import dcc
