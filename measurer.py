@@ -6,7 +6,7 @@ from bme280 import BME280
 import pandas as pd
 import numpy as np
 
-import time, datetime, threading, signal, os, tempfile, itertools, random, string, sys
+import time, datetime, threading, signal, os, tempfile, itertools, random, string, sys, math
 
 class MeasurementsArchive:
   class ArchiveEntry:
@@ -242,7 +242,26 @@ class Measurer(threading.Thread):
       if self.stop_event.wait(timeout = self.period):
         break
 
-def obtain_bme(smbus=1):
+class FakeBme280:
+  def __init__(self):
+    self.t = 0
+
+  def update_sensor(self):
+    self.t += 0.1
+
+  @property
+  def temperature(self):
+    return 20 + 2.0 * math.sin(self.t)
+  
+  @property
+  def humidity(self):
+    return 70 + 5.0 * math.sin(self.t * 2)
+
+  @property
+  def pressure(self):
+    return 1014 + 10.0 * math.sin(self.t / 2)
+
+def obtain_real_bme(smbus=1):
   bus = SMBus(smbus)
   bme = BME280(i2c_dev=bus)
   bme.update_sensor()
@@ -257,12 +276,19 @@ if __name__ == "__main__":
   SAMPLES_IN_HOUR=3600/PERIOD
   SAMPLES_IN_DAY=24*SAMPLES_IN_HOUR
   MAX_SAMPLES=7*SAMPLES_IN_DAY
-  PATH="./test-data"
+
   if len(sys.argv) == 2:
     PATH=sys.argv[1]
+    bme=obtain_real_bme()
+  else:
+    PERIOD=1
+    PATH="./test-data"
+    bme=FakeBme280()
+    print(f"Using fake BME sensor.")
+
   archive=MeasurementsArchive(PATH)
   archive.open()
-  measurer=Measurer(obtain_bme(), archive, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
+  measurer=Measurer(bme, archive, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
 
   def catch_signal(*args):
     measurer.stop()
