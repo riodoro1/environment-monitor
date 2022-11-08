@@ -182,5 +182,5 @@ class Plotter:
       cached = False
 
     print(f"get_plot took:{(time.time()-function_start):.2f}s. The plot was: {'recalled' if cached else 'redrawn'}")
-    
+
     return self.previous_result["plot"]

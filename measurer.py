@@ -40,8 +40,8 @@ class MeasurementsArchive:
         return path if not os.path.exists(path) else random_file(directory, length)
 
       path=random_file(directory)
-      pd.DataFrame( [], columns=cls.column_names, 
-                      dtype=np.float64, 
+      pd.DataFrame( [], columns=cls.column_names,
+                      dtype=np.float64,
                       index=pd.DatetimeIndex([], name="time")).to_pickle(path)
       return cls( path=path,
                   start=None,
@@ -98,7 +98,7 @@ class MeasurementsArchive:
   def __init__(self, archive_path):
     self.archive_path=archive_path
     self.archive_entries=[]
-  
+
   def last_entry(self):
     return self.archive_entries[-1]
 
@@ -119,7 +119,7 @@ class MeasurementsArchive:
         self.archive_path=tempfile.mkdtemp()
         print(f"Failed to create archive directory: {e}\nWill write to: {self.archive_path}")
 
-    files_in_archive_path=[f for f in 
+    files_in_archive_path=[f for f in
                           [os.path.join(self.archive_path, f) for f in os.listdir(self.archive_path)]
                           if os.path.isfile(f)]
 
@@ -141,8 +141,8 @@ class MeasurementsArchive:
     self.refresh_last_entry()
 
     already_opened_files=[e.path for e in self.archive_entries]
-    new_files=[f for f in 
-              [os.path.join(self.archive_path, f) for f in os.listdir(self.archive_path)] 
+    new_files=[f for f in
+              [os.path.join(self.archive_path, f) for f in os.listdir(self.archive_path)]
               if os.path.isfile(f) and f not in already_opened_files]
     if new_files:
       self.append_entries_from_files(new_files)
@@ -155,7 +155,7 @@ class MeasurementsArchive:
     for entry in open_entries:
       entry.close()
     self.archive_entries=[]
-    
+
   def append_entry(self):
     try:
       self.last_entry().close()
@@ -209,7 +209,7 @@ class Measurer(threading.Thread):
         self.bme280.temperature,
         self.bme280.humidity,
         self.bme280.pressure
-      ], 
+      ],
       datetime.datetime.now()
     )
 

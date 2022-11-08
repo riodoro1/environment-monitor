@@ -111,8 +111,12 @@ def update_custom_period_picker(_):
 )
 def update_plot(_, period_selection, parameter_selection, custom_start, custom_end):
   print("update_plot")
+  if not ARCHIVE.is_open():
+    print("Archive not open upon refresh, trying to open it now")
+    ARCHIVE.open()
   ARCHIVE.refresh()
-  if period_selection == "last24":  
+  print(f"After refresh {ARCHIVE.archive_entries}")
+  if period_selection == "last24":
     end = datetime.datetime.now()
     start = end - datetime.timedelta(hours=24)
   else:
@@ -122,8 +126,7 @@ def update_plot(_, period_selection, parameter_selection, custom_start, custom_e
     if end.hour == end.minute == end.second == 0:
       end = end + datetime.timedelta(hours=23, minutes=59, seconds=59)
       print(f"Adjusting custom_end to: {end.isoformat()}")
-    
-  
+
   return PLOTTER.get_plot(start, end, parameter_selection)
 
 if __name__ == '__main__':
