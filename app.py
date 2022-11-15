@@ -5,7 +5,7 @@ from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
 
-import datetime, sys
+import datetime, sys, os
 
 from measurer import MeasurementsArchive
 from plotter import Plotter
@@ -69,12 +69,13 @@ def app_layout():
     className="container"
   )
 
-ARCHIVE = MeasurementsArchive("./test-data")
+ARCHIVE = MeasurementsArchive(os.environ.get("MEASUREMENTS_PATH") or "./test-data")
 ARCHIVE.open()
 PLOTTER = Plotter(ARCHIVE)
 
 app = dash.Dash(__name__)
 app.layout = app_layout()
+server = app.server
 
 @app.callback(
   Output("refresher", "disabled"),

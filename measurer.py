@@ -277,8 +277,8 @@ if __name__ == "__main__":
   SAMPLES_IN_DAY=24*SAMPLES_IN_HOUR
   MAX_SAMPLES=7*SAMPLES_IN_DAY
 
-  if len(sys.argv) == 2:
-    PATH=sys.argv[1]
+  archive_path = os.environ.get("MEASUREMENTS_PATH")
+  if archive_path:
     bme=obtain_real_bme()
   else:
     PERIOD=1
@@ -286,7 +286,7 @@ if __name__ == "__main__":
     bme=FakeBme280()
     print(f"Using fake BME sensor.")
 
-  archive=MeasurementsArchive(PATH)
+  archive=MeasurementsArchive(archive_path)
   archive.open()
   measurer=Measurer(bme, archive, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
 
