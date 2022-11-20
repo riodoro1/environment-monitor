@@ -1,5 +1,3 @@
-#!./venv/bin/python -u
-
 from smbus import SMBus
 from bme280 import BME280
 

@@ -1,0 +1,22 @@
+[Unit]
+Description=Measurer service for environment-monitor
+After=syslog.target localfs.target
+
+StartLimitIntervalSec=5400 #1h 30m
+StartLimitBurst=6
+
+[Service]
+Type=simple
+User=<USER>
+Group=<USER>
+WorkingDirectory=<PWD>
+Environment="MEASUREMENTS_PATH=<PWD>/measurements"
+ExecStart=<PWD>/venv/bin/python -u <PWD>/measurer.py
+StandardOutput=journal
+StandardError=journal
+
+Restart=on-failure
+RestartSec=900 #15m
+
+[Install]
+WantedBy=multi-user.target
