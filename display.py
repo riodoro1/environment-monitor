@@ -1,16 +1,18 @@
 #!/home/rafal/environment-monitor/venv/bin/python
 
-import sys
+import os
 from hd44780 import hd44780
 from measurer import MeasurementsArchive
 
 from time import sleep
 
 if __name__ == "__main__":
-  if len(sys.argv) == 2:
-    archive = MeasurementsArchive(sys.argv[1])
+  archive_path = os.environ.get("MEASUREMENTS_PATH")
+
+  if archive_path:
+    archive = MeasurementsArchive(archive_path)
   else:
-    raise RuntimeError("No archive path in argv")
+    raise RuntimeError("No archive path in environment")
 
   archive.open()
   lcd = hd44780(hd44780.default_pinmap)

@@ -1,0 +1,16 @@
+[Unit]
+Description=LCD display service for environment-monitor
+After=syslog.target localfs.target networking.target
+
+[Service]
+Type=simple
+User=<USER>
+Group=<USER>
+WorkingDirectory=<PWD>
+Environment="MEASUREMENTS_PATH=<PWD>/measurements"
+ExecStart=<PWD>/venv/bin/python display.py
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
