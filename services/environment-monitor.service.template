@@ -1,0 +1,18 @@
+[Unit]
+Description=WebUI service for environment-monitor
+After=syslog.target localfs.target networking.target
+
+[Service]
+Type=simple
+User=<USER>
+Group=<USER>
+WorkingDirectory=<PWD>
+Environment="MEASUREMENTS_PATH=<PWD>/measurements"
+ExecStart=<PWD>/venv/bin/python -u <PWD>/app.py
+StandardOutput=journal
+StandardError=journal
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
