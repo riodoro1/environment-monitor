@@ -1,31 +1,12 @@
 import pandas as pd
 import plotly.graph_objects as go
 
+from sensor import Sensor
+
 #TODO: remove
 import time
 
 class Plotter:
-  PARAMETERS={
-    "temperature":{
-      "name":"Temperature",
-      "color":"#EF553B",
-      "format":"0.1f",
-      "suffix":"°C"
-    },
-    "humidity":{
-      "name":"Humidity",
-      "color":"#636EFA",
-      "format":"0.0f",
-      "suffix":"%"
-    },
-    "pressure":{
-      "name":"Pressure",
-      "color":"#00CC96",
-      "format":"0.0f",
-      "suffix":"hPa"
-    },
-  }
-
   def __init__(self, archive):
     self.archive = archive
     self.previous_result = {"arguments":None, "plot":None}
@@ -112,9 +93,9 @@ class Plotter:
         x=dataframe.index,
         y=dataframe[parameter],
         yaxis=f"y{i+1}",
-        name=self.PARAMETERS[parameter]["name"],
+        name=Sensor.Decorations[parameter]["name"],
         line=dict(
-          color=self.PARAMETERS[parameter]["color"]
+          color=Sensor.Decorations[parameter]["color"]
         )
       ))
 
@@ -129,7 +110,7 @@ class Plotter:
       # Set Y axis layout
       yaxis_layout=dict(
         title=dict(
-          text=f"<b>{self.PARAMETERS[parameter]['name']}</b>",
+          text=f"<b>{Sensor.Decorations[parameter]['name']}</b>",
           font=dict(
             size=12
         ),
@@ -139,7 +120,7 @@ class Plotter:
           size=11
         ),
 
-        color=self.PARAMETERS[parameter]["color"],
+        color=Sensor.Decorations[parameter]["color"],
         gridcolor=PLOT_GRID_COLOR,
         showgrid=True,
         showspikes=True,
@@ -149,8 +130,8 @@ class Plotter:
 
         tick0=y_axis_min,
         dtick=y_axis_step,
-        tickformat=self.PARAMETERS[parameter]["format"],
-        ticksuffix=self.PARAMETERS[parameter]["suffix"],
+        tickformat=Sensor.Decorations[parameter]["format"],
+        ticksuffix=Sensor.Decorations[parameter]["suffix"],
 
         side=y_axis_side,
         overlaying=y_axis_overlaying,

@@ -1,14 +1,13 @@
-from smbus import SMBus
-from bme280 import BME280
-
 import pandas as pd
 import numpy as np
 
-import time, datetime, threading, signal, os, tempfile, itertools, random, string, sys, math
+import datetime, threading, signal, os, tempfile, itertools, random, string, sys
+
+from sensor import Sensor
 
 class MeasurementsArchive:
   class ArchiveEntry:
-    column_names=["temperature", "humidity", "pressure"]
+    column_names=Sensor.Parameters
 
     def __init__(self, path, start, end, samples, dataframe):
       self.path=path
@@ -83,7 +82,7 @@ class MeasurementsArchive:
         raise RuntimeError("Cannot append to a closed ArchiveEntry")
       if not self.end is None and self.end > time:
         raise RuntimeError(f"Appending measurement with time: {time} which is before end time: {self.end}")
-      frame=pd.DataFrame( [measurement], 
+      frame=pd.DataFrame( [measurement],
                           columns=MeasurementsArchive.ArchiveEntry.column_names,
                           index=pd.DatetimeIndex([time], name="time")
       )
@@ -188,8 +187,9 @@ class MeasurementsArchive:
     return entries
 
 class Measurer(threading.Thread):
-  def __init__(self, bme280, archive, period=60, max_samples_per_file=1000000, save_every_samples=5):
-    self.bme280=bme280
+  def __init__(self, archive, period=60, max_samples_per_file=1000000, save_every_samples=5):
+    self.sensor = Sensor()
+
     self.archive=archive
     self.period=period
 
@@ -201,13 +201,8 @@ class Measurer(threading.Thread):
     threading.Thread.__init__(self)
 
   def make_measurement(self):
-    self.bme280.update_sensor()
     self.append_to_archive(
-      [
-        self.bme280.temperature,
-        self.bme280.humidity,
-        self.bme280.pressure
-      ],
+      self.sensor.measure(),
       datetime.datetime.now()
     )
 
@@ -240,34 +235,6 @@ class Measurer(threading.Thread):
       if self.stop_event.wait(timeout = self.period):
         break
 
-class FakeBme280:
-  def __init__(self):
-    self.t = 0
-
-  def update_sensor(self):
-    self.t += 0.1
-
-  @property
-  def temperature(self):
-    return 20 + 2.0 * math.sin(self.t)
-  
-  @property
-  def humidity(self):
-    return 70 + 5.0 * math.sin(self.t * 2)
-
-  @property
-  def pressure(self):
-    return 1014 + 10.0 * math.sin(self.t / 2)
-
-def obtain_real_bme(smbus=1):
-  bus = SMBus(smbus)
-  bme = BME280(i2c_dev=bus)
-  bme.update_sensor()
-  time.sleep(2)
-  bme.update_sensor()
-  time.sleep(2)
-  return bme
-
 if __name__ == "__main__":
   PERIOD=30
   SAVE_EVERY=2
@@ -276,17 +243,10 @@ if __name__ == "__main__":
   MAX_SAMPLES=7*SAMPLES_IN_DAY
 
   archive_path = os.environ.get("MEASUREMENTS_PATH")
-  if archive_path:
-    bme=obtain_real_bme()
-  else:
-    PERIOD=1
-    PATH="./test-data"
-    bme=FakeBme280()
-    print(f"Using fake BME sensor.")
 
   archive=MeasurementsArchive(archive_path)
   archive.open()
-  measurer=Measurer(bme, archive, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
+  measurer=Measurer(archive, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
 
   def catch_signal(*args):
     measurer.stop()

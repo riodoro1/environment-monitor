@@ -7,6 +7,7 @@ from dash.dependencies import Input, Output
 
 import datetime, sys, os
 
+from sensor import Sensor
 from measurer import MeasurementsArchive
 from plotter import Plotter
 
@@ -21,9 +22,9 @@ def app_layout():
               dcc.Checklist(
                 id="parameters-inputlist",
                 options=[
-                    {"label":dict["name"], "value":label} for label, dict in Plotter.PARAMETERS.items()
+                    {"label":dict["name"], "value":label} for label, dict in Sensor.Decorations.items()
                 ],
-                value=list(Plotter.PARAMETERS.keys()),
+                value=list(Sensor.Decorations.keys()),
                 className="form-inputlist",
                 labelClassName="form-inputlist-label",
                 inputClassName="form-inputlist-input"
