@@ -2,7 +2,7 @@ from smbus import SMBus
 from bme280 import BME280
 import time
 
-class Bme:
+class Sensor_BME280:
   Parameters = ["temperature", "humidity", "pressure"]
   Decorations = {
     "temperature":{
