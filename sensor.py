@@ -1,1 +1,1 @@
-from sensor_bme280 import Sensor_BME280 as Sensor
+from sensor_scd4x import Sensor_SCD4X as Sensor

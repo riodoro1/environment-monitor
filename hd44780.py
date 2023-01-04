@@ -4,6 +4,8 @@ import RPi.GPIO as GPIO
 class hd44780:
   E_PULSE = 0.0005
   E_DELAY = 0.0005
+  ROWS = 2
+  COLUMNS = 16
 
   default_pinmap={
     "RS":4,
@@ -52,9 +54,10 @@ class hd44780:
 
   def clear(self):
     self.send_instruction(0x01)
+    self.custom_chars = 0
 
   def set_position(self, row, col):
-    if col < 0 or col > 15 or row < 0 or row > 1:
+    if col < 0 or col > self.columns-1 or row < 0 or row > self.rows-1:
       raise ValueError(f"Invalid position: {row},{col}")
     if row == 0:
       address = 0x80 + col
@@ -62,14 +65,19 @@ class hd44780:
       address = 0xC0 + col
     self.send_instruction(address)
 
-  def add_character(self, character, index):
-    if index < 0 or index > 8:
-      raise ValueError(f"Invalid index: {index}")
+  def add_character(self, character):
+    if self.custom_chars == 8:
+      raise ValueError(f"Custom characters memory full")
     if len(character) != 8:
       raise ValueError(f"Invalid character size")
+
+    index = self.custom_chars
+    self.custom_chars += 1
+
     self.send_instruction(0x40 + index * 8)
     for row in character:
       self.send_byte(row)
+    return index
 
   def setup_gpio(self):
     GPIO.setmode(GPIO.BCM)
@@ -87,15 +95,7 @@ class hd44780:
   def __init__(self, pinmap):
     self.pinmap=pinmap
     self.data_pins={key:value for key, value in self.pinmap.items() if key.startswith("D")}
+    self.rows = self.ROWS
+    self.columns = self.COLUMNS
     self.setup_gpio()
     self.init_display()
-
-if __name__ == '__main__':
-  disp=hd44780(hd44780.default_pinmap)
-
-  disp.print("This is a test")
-
-  custom_char=[0b10101, 0b01010, 0b10101, 0b01010, 0b10101, 0b01010, 0b10101, 0b01010]
-  disp.add_character(custom_char, 0)
-  disp.set_position(1,6)
-  disp.print("\x00\x00\x00")

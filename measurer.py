@@ -52,6 +52,13 @@ class MeasurementsArchive:
     def __str__(self) -> str:
         return f"ArchiveEntry from {self.start} to {self.end}. Samples: {self.samples}"
 
+    def __eq__(self, other):
+      if not isinstance(other, self.__class__):
+        return False
+
+      return self.path == other.path and self.start == other.start and self.end == other.end and self.samples == other.samples
+
+
     def has_timeframe(self):
       return self.start is not None and self.end is not None
 
