@@ -11,6 +11,7 @@ Environment="MEASUREMENTS_PATH=<PWD>/measurements"
 ExecStart=<PWD>/venv/bin/python display.py
 StandardOutput=journal
 StandardError=journal
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
