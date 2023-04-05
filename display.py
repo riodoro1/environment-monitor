@@ -3,7 +3,8 @@ import time
 from datetime import datetime
 import threading
 
-from hd44780 import hd44780
+#from hd44780 import HD44780
+from hd44780_over_pcf8574 import HD44780
 from measurer import MeasurementsArchive
 from sensor import Sensor
 
@@ -105,7 +106,7 @@ if __name__ == "__main__":
   else:
     raise RuntimeError("No archive path in environment")
 
-  lcd = hd44780(hd44780.default_pinmap)
+  lcd = HD44780()
   display = Display(lcd, archive)
 
   display.run()
