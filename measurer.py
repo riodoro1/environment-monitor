@@ -238,7 +238,18 @@ class Measurer(threading.Thread):
 
   def run(self):
     while True:
-      self.make_measurement()
+      retry_count = 5
+      while retry_count > 0:
+        try:
+          self.make_measurement()
+        except Exception as e:
+          retry_count -= 1
+          if retry_count == 0:
+            print(f"Reading sensor failed after retrying")
+            raise e
+          self.stop_event.wait(timeout = 1)
+        else:
+          retry_cout = 0;
       if self.stop_event.wait(timeout = self.period):
         break
 
