@@ -1,0 +1,36 @@
+{
+  "outlets": [
+    {
+      "id": 1,
+      "name": "Lamp",
+      "GPIO": {
+        "pin": 17,
+        "on-state": 0
+      }
+    },
+    {
+      "id": 2,
+      "name": "Extractor fan",
+      "GPIO": {
+        "pin": 27,
+        "on-state": 0
+      }
+    },
+    {
+      "id": 3,
+      "name": "Mixer fan",
+      "GPIO": {
+        "pin": 22,
+        "on-state": 0
+      }
+    },
+    {
+      "id": 4,
+      "name": "Unused",
+      "GPIO": {
+        "pin": 23,
+        "on-state": 0
+      }
+    }
+  ]
+}
