@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-import datetime, threading, signal, os, tempfile, itertools, random, string, sys
+import datetime, threading, signal, os, tempfile, itertools, random, string, sys, json
 
 from sensor import Sensor
 
@@ -194,10 +194,12 @@ class MeasurementsArchive:
     return entries
 
 class Measurer(threading.Thread):
-  def __init__(self, archive, period=60, max_samples_per_file=1000000, save_every_samples=5):
+  def __init__(self, archive_path, period=60, max_samples_per_file=1000000, save_every_samples=5):
     self.sensor = Sensor()
 
-    self.archive=archive
+    self.archive_path=archive_path
+    self.archive=MeasurementsArchive(archive_path)
+
     self.period=period
 
     self.max_samples_per_file=max_samples_per_file
@@ -208,10 +210,10 @@ class Measurer(threading.Thread):
     threading.Thread.__init__(self)
 
   def make_measurement(self):
-    self.append_to_archive(
-      self.sensor.measure(),
-      datetime.datetime.now()
-    )
+    time = datetime.datetime.now()
+    measurement = self.sensor.measure()
+    self.append_to_archive(measurement, time)
+    self.write_status(measurement, time)
 
   def append_to_archive(self, measurement, time):
     try:
@@ -232,24 +234,27 @@ class Measurer(threading.Thread):
     if last_entry.samples > self.max_samples_per_file:
       self.archive.append_entry()
 
+  def write_status(self, measurement, time):
+    json_dict = {"time":time.isoformat()}
+    for index, parameter_name in enumerate(Sensor.Parameters):
+      json_dict[parameter_name] = measurement[index]
+    with open(self.status_file_path, "w") as status_file:
+      json.dump(json_dict, status_file)
+      status_file.close()
+
   def stop(self):
     self.stop_event.set()
     self.archive.close()
+    os.unlink(self.status_file_path)
 
   def run(self):
+    self.archive.open()
+    self.status_file_path = os.path.join(self.archive_path, "status.json")
+    if os.path.exists(self.status_file_path):
+      raise RuntimeError(f"{self.status_file_path} exists. Perhaps another instance of Measurer running?")
+
     while True:
-      retry_count = 5
-      while retry_count > 0:
-        try:
-          self.make_measurement()
-        except Exception as e:
-          retry_count -= 1
-          if retry_count == 0:
-            print(f"Reading sensor failed after retrying")
-            raise e
-          self.stop_event.wait(timeout = 1)
-        else:
-          retry_cout = 0;
+      self.make_measurement()
       if self.stop_event.wait(timeout = self.period):
         break
 
@@ -262,15 +267,13 @@ if __name__ == "__main__":
 
   archive_path = os.environ.get("MEASUREMENTS_PATH")
 
-  archive=MeasurementsArchive(archive_path)
-  archive.open()
-  measurer=Measurer(archive, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
+  measurer=Measurer(archive_path, PERIOD, max_samples_per_file=MAX_SAMPLES, save_every_samples=SAVE_EVERY)
 
   def catch_signal(*args):
     measurer.stop()
 
   signal.signal(signal.SIGTERM, catch_signal)
   signal.signal(signal.SIGINT, catch_signal)
-  print(f"Running in {archive.archive_path}...")
+  print(f"Running in {measurer.archive.archive_path}...")
   measurer.run() # Can be blocking here, we are in a deamon thread after all
   print("Measurer stopped.")

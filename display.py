@@ -2,10 +2,9 @@ import os
 import time
 from datetime import datetime
 import threading
+import json
 
-#from hd44780 import HD44780
 from hd44780_over_pcf8574 import HD44780
-from measurer import MeasurementsArchive
 from sensor import Sensor
 
 class Display(threading.Thread):
@@ -22,9 +21,9 @@ class Display(threading.Thread):
       self.previous_text = self.text
       self.text = self.format_string.format(value = value)
 
-  def __init__(self, lcd, archive):
+  def __init__(self, lcd, archive_path):
     self.lcd = lcd
-    self.archive = archive
+    self.measurer_status_path = os.path.join(archive_path, "status.json")
     self.elements = []
 
     self.add_time_element()
@@ -77,36 +76,30 @@ class Display(threading.Thread):
 
   def run(self):
     self.lcd.clear()
-    self.archive.open()
 
-    prev_last_entry = None
+    last_timestamp = None
     while(True):
-      archive.refresh()
-      last_entry = archive.last_entry()
+      try:
+        with open(self.measurer_status_path) as measurer_status:
+          json_dict = json.load(measurer_status)
+          timestamp = datetime.fromisoformat(json_dict["time"])
 
-      if last_entry != prev_last_entry:
-        last_entry.open()
+        if timestamp != last_timestamp:
+          display.elements[0].set_value(timestamp.strftime("%H:%M"))
 
-        last_entry_time = last_entry.dataframe.index[-1]
-        display.elements[0].set_value(last_entry_time.strftime("%H:%M"))
-        for element in display.elements[1:]:
-          element.set_value(last_entry.dataframe[element.key].iloc[-1])
+          for element in display.elements[1:]:
+            element.set_value(json_dict[element.key])
 
-        display.redraw()
-        last_entry.close()
-        prev_last_entry = last_entry
-
-      time.sleep(5)
+          display.redraw()
+          last_timestamp = timestamp
+      except JSONDecodeError:
+        print(f"Empty measurer status file {self.measurer_status_path}, will retry")
+      time.sleep(10)
 
 if __name__ == "__main__":
   archive_path = os.environ.get("MEASUREMENTS_PATH")
 
-  if archive_path:
-    archive = MeasurementsArchive(archive_path)
-  else:
-    raise RuntimeError("No archive path in environment")
-
   lcd = HD44780()
-  display = Display(lcd, archive)
+  display = Display(lcd, archive_path)
 
   display.run()
