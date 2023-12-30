@@ -29,8 +29,8 @@ class HD44780:
   E_PIN = 2
   BACKLIGHT_PIN = 3
 
-  E_DELAY = 0.0004
-  E_PULSE = 0.00001
+  E_DELAY = 0.0004 #was 0.0004 without E cap
+  E_PULSE = 0.0004 #was 0.00001 without E cap
 
   ROWS = 2
   COLUMNS = 16
