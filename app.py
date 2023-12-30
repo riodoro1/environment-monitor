@@ -38,10 +38,11 @@ def app_layout():
               dcc.RadioItems(
                 id="period-inputlist",
                 options=[
+                  {"label": "Last 12 hours", "value": "last12"},
                   {"label": "Last 24 hours", "value": "last24"},
                   {"label": "Custom:", "value": "custom"}
                 ],
-                value="last24",
+                value="last12",
                 className="form-inputlist",
                 labelClassName="form-inputlist-label",
                 inputClassName="form-inputlist-input"
@@ -121,6 +122,9 @@ def update_plot(_, period_selection, parameter_selection, custom_start, custom_e
   if period_selection == "last24":
     end = datetime.datetime.now()
     start = end - datetime.timedelta(hours=24)
+  if period_selection == "last12":
+    end = datetime.datetime.now()
+    start = end - datetime.timedelta(hours=12)
   else:
     print(f"Custom start:{custom_start}, end:{custom_end}")
     end=datetime.datetime.fromisoformat(custom_end)
