@@ -251,7 +251,7 @@ class Measurer(threading.Thread):
     self.archive.open()
     self.status_file_path = os.path.join(self.archive_path, "status.json")
     if os.path.exists(self.status_file_path):
-      raise RuntimeError(f"{self.status_file_path} exists. Perhaps another instance of Measurer running?")
+      print(f"{self.status_file_path} exists! This might mean there are two instances running or previous instance exited unexpectedly.")
 
     while True:
       self.make_measurement()
