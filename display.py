@@ -60,6 +60,10 @@ class Display(threading.Thread):
       format_string = add_custom_chars(decoration)
       self.elements.append(Display.Element(key, format_string))
 
+  def invalidate_elements(self):
+    for element in self.elements:
+      element.previous_text = "\21\37"
+
   def redraw(self):
     row = 0
     col = 0
@@ -78,6 +82,7 @@ class Display(threading.Thread):
     self.lcd.clear()
 
     last_timestamp = None
+    redraws_since_init = 0
     while(True):
       try:
         with open(self.measurer_status_path) as measurer_status:
@@ -85,16 +90,22 @@ class Display(threading.Thread):
           timestamp = datetime.fromisoformat(json_dict["time"])
 
         if timestamp != last_timestamp:
-          display.elements[0].set_value(timestamp.strftime("%H:%M"))
+          self.elements[0].set_value(timestamp.strftime("%H:%M"))
 
-          for element in display.elements[1:]:
+          for element in self.elements[1:]:
             element.set_value(json_dict[element.key])
 
-          display.redraw()
+          if redraws_since_init > 10:
+            self.lcd.init_display()
+            self.invalidate_elements()
+            redraws_since_init = 0
+
+          self.redraw()
+          redraws_since_init += 1
           last_timestamp = timestamp
       except JSONDecodeError:
         print(f"Empty measurer status file {self.measurer_status_path}, will retry")
-      time.sleep(10)
+      time.sleep(5)
 
 if __name__ == "__main__":
   archive_path = os.environ.get("MEASUREMENTS_PATH")
