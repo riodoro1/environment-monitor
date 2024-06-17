@@ -25,7 +25,10 @@ class Display(threading.Thread):
     self.lcd = lcd
     self.measurer_status_path = os.path.join(archive_path, "status.json")
     self.elements = []
+    self.init_display()
 
+  def init_display(self):
+    self.lcd.init_display()
     self.add_time_element()
     self.add_elements(Sensor.Decorations)
 
@@ -57,8 +60,9 @@ class Display(threading.Thread):
       return format_string
 
     for key, decoration in parameter_decorations.items():
-      format_string = add_custom_chars(decoration)
-      self.elements.append(Display.Element(key, format_string))
+      if "display" in decoration:
+        format_string = add_custom_chars(decoration)
+        self.elements.append(Display.Element(key, format_string))
 
   def invalidate_elements(self):
     for element in self.elements:
@@ -96,7 +100,7 @@ class Display(threading.Thread):
             element.set_value(json_dict[element.key])
 
           if redraws_since_init > 10:
-            self.lcd.init_display()
+            self.init_display()
             self.invalidate_elements()
             redraws_since_init = 0
 

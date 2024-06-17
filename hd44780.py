@@ -91,6 +91,7 @@ class HD44780:
     self.send_instruction(0x0C) #Display ON, Cursor OFF, Blink OFF
     self.send_instruction(0x06) #Increment address upon write, no shift
     self.clear()
+    self.custom_chars = 0 #Adding new characters will overwrite old ones.
 
   def __init__(self, pinmap = self.default_pinmap):
     self.pinmap=pinmap
