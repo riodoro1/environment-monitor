@@ -17,18 +17,23 @@ class Display(threading.Thread):
       self.text = ""
       self.previous_text = ""
 
-    def set_value(self, value):
+    def set_text(self, value):
       self.previous_text = self.text
       self.text = self.format_string.format(value = value)
 
   def __init__(self, lcd, archive_path):
     self.lcd = lcd
     self.measurer_status_path = os.path.join(archive_path, "status.json")
-    self.elements = []
     self.init_display()
+    self.init_elements()
 
   def init_display(self):
+    print(f"init_display")
     self.lcd.init_display()
+
+  def init_elements(self):
+    print(f"init_elements")
+    self.elements = []
     self.add_time_element()
     self.add_elements(Sensor.Decorations)
 
@@ -71,8 +76,10 @@ class Display(threading.Thread):
   def redraw(self):
     row = 0
     col = 0
+    print(f"Redraw called with {len(self.elements)} elements")
     for element in self.elements:
       if element.text != element.previous_text:
+        print(f"Redrawing element with text: \"{element.text}\" (previously: \"{element.previous_text}\") at {row}x{col}")
         self.lcd.set_position(row, int(col * self.lcd.columns/self.COLUMNS))
         self.lcd.print(element.text.ljust(len(element.previous_text), " "))
         element.previous_text = element.text
@@ -94,20 +101,20 @@ class Display(threading.Thread):
           timestamp = datetime.fromisoformat(json_dict["time"])
 
         if timestamp != last_timestamp:
-          self.elements[0].set_value(timestamp.strftime("%H:%M"))
-
-          for element in self.elements[1:]:
-            element.set_value(json_dict[element.key])
-
           if redraws_since_init > 10:
             self.init_display()
-            self.invalidate_elements()
+            self.init_elements()
             redraws_since_init = 0
+
+          self.elements[0].set_text(timestamp.strftime("%H:%M"))
+
+          for element in self.elements[1:]:
+            element.set_text(json_dict[element.key])
 
           self.redraw()
           redraws_since_init += 1
           last_timestamp = timestamp
-      except JSONDecodeError:
+      except json.JSONDecodeError:
         print(f"Empty measurer status file {self.measurer_status_path}, will retry")
       time.sleep(5)
 
