@@ -28,11 +28,11 @@ class Display(threading.Thread):
     self.init_elements()
 
   def init_display(self):
-    print(f"init_display")
+    #print(f"init_display")
     self.lcd.init_display()
 
   def init_elements(self):
-    print(f"init_elements")
+    #print(f"init_elements")
     self.elements = []
     self.add_time_element()
     self.add_elements(Sensor.Decorations)
@@ -76,10 +76,10 @@ class Display(threading.Thread):
   def redraw(self):
     row = 0
     col = 0
-    print(f"Redraw called with {len(self.elements)} elements")
+    #print(f"Redraw called with {len(self.elements)} elements")
     for element in self.elements:
       if element.text != element.previous_text:
-        print(f"Redrawing element with text: \"{element.text}\" (previously: \"{element.previous_text}\") at {row}x{col}")
+        #print(f"Redrawing element with text: \"{element.text}\" (previously: \"{element.previous_text}\") at {row}x{col}")
         self.lcd.set_position(row, int(col * self.lcd.columns/self.COLUMNS))
         self.lcd.print(element.text.ljust(len(element.previous_text), " "))
         element.previous_text = element.text
@@ -91,32 +91,35 @@ class Display(threading.Thread):
 
   def run(self):
     self.lcd.clear()
+    last_reinit = datetime.now()
 
-    last_timestamp = None
-    redraws_since_init = 0
     while(True):
       try:
         with open(self.measurer_status_path) as measurer_status:
           json_dict = json.load(measurer_status)
           timestamp = datetime.fromisoformat(json_dict["time"])
+        now = datetime.now()
+        is_alive = (now - timestamp).total_seconds() < 120
+        needs_reinit = (now - last_reinit).total_seconds() > 60
 
-        if timestamp != last_timestamp:
-          if redraws_since_init > 10:
-            self.init_display()
-            self.init_elements()
-            redraws_since_init = 0
+        if needs_reinit:
+          self.init_display()
+          self.init_elements()
+          last_reinit = now
 
-          self.elements[0].set_text(timestamp.strftime("%H:%M"))
+        time_element = self.elements[0]
+        if ":" in time_element.text and is_alive:
+          time_element.set_text(timestamp.strftime("%H %M"))
+        else:
+          time_element.set_text(timestamp.strftime("%H:%M"))
 
-          for element in self.elements[1:]:
-            element.set_text(json_dict[element.key])
+        for element in self.elements[1:]:
+          element.set_text(json_dict[element.key])
 
-          self.redraw()
-          redraws_since_init += 1
-          last_timestamp = timestamp
+        self.redraw()
       except json.JSONDecodeError:
         print(f"Empty measurer status file {self.measurer_status_path}, will retry")
-      time.sleep(5)
+      time.sleep(1)
 
 if __name__ == "__main__":
   archive_path = os.environ.get("MEASUREMENTS_PATH")
