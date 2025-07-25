@@ -92,7 +92,7 @@ class Display(threading.Thread):
   def run(self):
     self.lcd.clear()
     self.lcd.print("Waiting for data...")
-    last_reinit = datetime.now()
+    last_reinit = datetime.min
 
     while(True):
       try:
