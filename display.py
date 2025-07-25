@@ -91,6 +91,7 @@ class Display(threading.Thread):
 
   def run(self):
     self.lcd.clear()
+    self.lcd.print("Waiting for data...")
     last_reinit = datetime.now()
 
     while(True):
@@ -119,10 +120,16 @@ class Display(threading.Thread):
         self.redraw()
       except json.JSONDecodeError:
         print(f"Empty measurer status file {self.measurer_status_path}, will retry")
+      except FileNotFoundError:
+        print(f"No measurer status file {self.measurer_status_path}, will retry")
       time.sleep(1)
 
 if __name__ == "__main__":
   archive_path = os.environ.get("MEASUREMENTS_PATH")
+
+  if archive_path is None:
+    print("MEASUREMENTS_PATH not defined")
+    exit(-1)
 
   lcd = HD44780()
   display = Display(lcd, archive_path)
