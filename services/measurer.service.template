@@ -2,7 +2,7 @@
 Description=Measurer service for environment-monitor
 After=syslog.target localfs.target
 
-StartLimitIntervalSec=5400 #1h 30m
+StartLimitIntervalSec=5400
 StartLimitBurst=6
 
 [Service]
@@ -16,7 +16,7 @@ StandardOutput=journal
 StandardError=journal
 
 Restart=on-failure
-RestartSec=900 #15m
+RestartSec=900
 
 [Install]
 WantedBy=multi-user.target
