@@ -1,0 +1,5 @@
+smbus
+pimoroni-bme280
+#pandas install using apt
+ 
+dash
