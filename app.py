@@ -142,4 +142,4 @@ if __name__ == '__main__':
     PLOTTER = Plotter(ARCHIVE)
 
   print(f"Launching server for archive in: {ARCHIVE.archive_path},\n{ARCHIVE.archive_entries}")
-  app.run_server(host='0.0.0.0', debug=False)
+  app.run(host='0.0.0.0', debug=False)

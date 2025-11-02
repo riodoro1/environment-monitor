@@ -18,7 +18,7 @@ class Plotter:
     for e in entries:
       was_open = e.is_open()
       if not was_open: e.open()
-      combined_df=combined_df.append(e.dataframe[start : end])
+      combined_df=pd.concat([combined_df, e.dataframe[start : end]])
       if not was_open: e.close()
 
     return combined_df
